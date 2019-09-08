@@ -1,0 +1,79 @@
+== ElasticSearch と Kibana
+
+=== コマンド
+
+* ヘルスチェック
++
+----
+$ curl -X GET "localhost:9200/_cat/nodes?v&pretty"
+ip         heap.percent ram.percent cpu load_1m load_5m load_15m node.role master name
+172.22.0.3           41          96   1    0.11    0.31     0.26 dim       *      es01
+172.22.0.2           40          97   1    0.11    0.31     0.26 dim       -      es02
+----
+
+* index作成（aozora）
++
+----
+$ curl -X PUT "localhost:9200/aozora?pretty&pretty"
+# 1回目
+{
+  "acknowledged" : true,
+  "shards_acknowledged" : true,
+  "index" : "aozora"
+}
+# 2回目以降
+{
+  "error" : {
+    "root_cause" : [
+      {
+        "type" : "resource_already_exists_exception",
+        "reason" : "index [aozora/6V-U0zZ4RCCkQdJK40jiJA] already exists",
+        "index_uuid" : "6V-U0zZ4RCCkQdJK40jiJA",
+        "index" : "aozora"
+      }
+    ],
+    "type" : "resource_already_exists_exception",
+    "reason" : "index [aozora/6V-U0zZ4RCCkQdJK40jiJA] already exists", <-- 作成済み！！！
+    "index_uuid" : "6V-U0zZ4RCCkQdJK40jiJA",
+    "index" : "aozora"
+  },
+  "status" : 400
+}
+----
+
+* 確認
++
+----
+$ curl -X GET "localhost:9200/_cat/indices?v&pretty"
+health status index  uuid                   pri rep docs.count docs.deleted store.size pri.store.size
+green  open   aozora 6V-U0zZ4RCCkQdJK40jiJA   1   1          0            0       460b           230b
+----
+* pri：プライマリシャードの数
+* rep：レプリカシャードの数
+* docs.count：ドキュメントの数
+
+=== 遭遇したエラー
+
+* エラー１
++
+----
+...
+es02    | ERROR: [1] bootstrap checks failed
+es02    | [1]: max virtual memory areas vm.max_map_count [65530] is too low, increase to at least [262144]
+...
+----
+
+* 対応策１
++
+----
+$ sudo sysctl -w vm.max_map_count=262144
+----
+
+=== 「こころ」をインデックスする
+
+----
+$ curl -X POST "localhost:9200/aozora/_bulk?pretty&pretty" --data-binary @bulk_kokoro.json -H 'Content-Type: application/json'
+----
+
+
+取得ができない（日本語だから？）

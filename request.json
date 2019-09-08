@@ -1,0 +1,6 @@
+{
+  "query": { "content": "先生" },
+  "_source": ["content", "title"],
+  "from": 0,
+  "size": 3
+}
